@@ -1,4 +1,7 @@
 const User = require("../models/User");
+const jwt = require("jsonwebtoken");
+
+
 
 const registerUser = async (req, res, next) => {
     try {
@@ -32,4 +35,48 @@ const registerUser = async (req, res, next) => {
     }
 };
 
-module.exports = { registerUser };
+const generateAccessToken = (user) => {
+    return jwt.sign(
+        { id: user._id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d" }
+    );
+};
+
+const login = async (req, res, next) => {
+    try {
+        const { email, password } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "invalid email or password",
+            });
+        }
+
+        const isPasswordCorrect = await user.comparePassword(password); 
+        if (!isPasswordCorrect) {
+            return res.status(401).json({
+                success: false,
+                message: "invalid email or password",
+            });
+        }
+
+        const accessToken = generateAccessToken(user);
+
+        const loggedInUser = await User.findById(user._id).select("-password");
+
+        return res.status(200).json({
+            success: true,
+            message: "logged in successfully",
+            user: loggedInUser,
+            accessToken,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+module.exports = { registerUser , login};
