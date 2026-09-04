@@ -26,7 +26,7 @@ app.use((err, req, res, next) => {
     });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8000;
 
 connectDB().then(() => {
     app.listen(PORT, () => {
